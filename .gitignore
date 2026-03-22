@@ -1,0 +1,16 @@
+.env
+.venv/
+.uv-cache/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.idea/
+.vscode/
+Thumbs.db
+Desktop.ini
+
+documents/

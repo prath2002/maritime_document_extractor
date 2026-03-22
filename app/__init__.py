@@ -1,0 +1,1 @@
+"""SMDE application package."""
