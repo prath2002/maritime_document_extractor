@@ -1,4 +1,4 @@
-import asyncio
+﻿import asyncio
 import os
 from collections.abc import AsyncIterator, Iterator
 from importlib import reload
@@ -21,8 +21,8 @@ VALID_ENV = {
     "APP_ENV": "test",
     "PORT": "8000",
     "DATABASE_URL": "postgresql+asyncpg://smde:smde@localhost:5432/smde",
-    "LLM_PROVIDER": "claude",
-    "LLM_MODEL": "claude-haiku-4-5-20251001",
+    "LLM_PROVIDER": "gemini",
+    "LLM_MODEL": "gemini-2.5-flash-lite",
     "LLM_API_KEY": "test-key",
     "PROMPT_VERSION": "v1.0",
     "SYNC_MAX_FILE_SIZE_MB": "2",
@@ -205,3 +205,4 @@ async def db_session(db_env_override, migrated_database: str) -> AsyncIterator[A
             await transaction.rollback()
 
     await engine.dispose()
+
