@@ -33,7 +33,7 @@ class Settings(BaseSettings):
 
     @property
     def api_prefix(self) -> str:
-        return "/api"
+        return "/api/v1"
 
 
 @lru_cache

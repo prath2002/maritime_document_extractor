@@ -1,4 +1,4 @@
-﻿from importlib import reload
+from importlib import reload
 
 from fastapi.testclient import TestClient
 
@@ -11,7 +11,7 @@ def test_health_endpoint_returns_ok_with_live_dependencies(env_override, migrate
     app = reloaded.create_app()
 
     with TestClient(app) as client:
-        response = client.get("/api/health")
+        response = client.get("/api/v1/health")
 
     assert response.status_code == 200
     payload = response.json()

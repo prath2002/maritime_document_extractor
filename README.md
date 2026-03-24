@@ -1,4 +1,4 @@
-﻿# SMDE
+# SMDE
 
 Smart Maritime Document Extractor backend.
 
@@ -8,7 +8,8 @@ This repository currently contains the completed foundation for:
 
 - Component 1: project bootstrap
 - Component 2: database and persistence layer
-- Component 3: app bootstrap and `GET /api/health`
+- Component 3: app bootstrap and `GET /api/v1/health`
+- Component 4: LLM reliability core
 
 Implemented so far:
 
@@ -24,9 +25,14 @@ Implemented so far:
   - `validations`
 - repository layer for the core persistence entities
 - lightweight queue manager bootstrap
-- Gemini-first LLM provider bootstrap for health wiring
-- `GET /api/health` with real database, queue, and provider dependency states
-- unit and integration tests for config, app bootstrap, migrations, repositories, and health checks
+- Gemini-first provider bootstrap for health wiring
+- extraction-ready provider abstraction with Gemini SDK-backed transport
+- typed extraction and reliability pipeline models
+- in-memory document preparation and base64 helpers
+- JSON boundary extraction plus repair-prompt flow
+- timeout handling and LOW-confidence retry orchestration
+- `GET /api/v1/health` with real database, queue, and provider dependency states
+- unit and integration tests for config, app bootstrap, migrations, repositories, health checks, and the Component 4 LLM reliability pipeline
 
 Default provider choice for the first real multimodal implementation path:
 
@@ -79,7 +85,7 @@ uv run uvicorn app.main:app --reload
 Call the health endpoint after startup:
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:8000/api/health
+Invoke-RestMethod http://127.0.0.1:8000/api/v1/health
 ```
 
 Expected behavior:
@@ -102,14 +108,26 @@ uv run pytest
 - lightweight queue manager in `app/queue/manager.py`
 - Gemini-first provider bootstrap in `app/llm/`
 - health response models in `app/schemas/health.py`
-- `GET /api/health` route in `app/api/health.py`
+- `GET /api/v1/health` route in `app/api/health.py`
 - health endpoint tests for healthy and degraded paths
+
+## What Component 4 Added
+
+- extraction-ready provider interface in `app/llm/base.py`
+- Gemini SDK-backed extraction transport in `app/llm/providers/gemini.py`
+- exact assignment extraction prompt plus repair/retry prompt helpers in `app/llm/prompts.py`
+- typed extraction payload and pipeline result models in `app/llm/types.py`
+- in-memory document preparation helpers in `app/utils/document_preparation.py`
+- JSON boundary extraction helpers in `app/utils/json_extractor.py`
+- reliability orchestration in `app/services/extraction_core.py`
+- unit tests for document preparation, provider factory/provider behavior, JSON extraction, timeout handling, repair flow, and LOW-confidence retry selection
 
 ## Planning Docs
 
 - `documents/COMPONENT_PLAN.md`: overall delivery roadmap
 - `documents/COMPONENT_2_TASK_LIST.md`: completed database and persistence checklist
 - `documents/COMPONENT_3_TASK_LIST.md`: completed app bootstrap and health-endpoint checklist
+- `documents/COMPONENT_4_TASK_LIST.md`: completed LLM reliability-core checklist
 
 ## Verification
 
@@ -117,12 +135,14 @@ The following are verified:
 
 - `uv run pytest`
 - `uv run alembic upgrade head`
-- direct local `GET /api/health` call returning `200 OK` with healthy dependencies
-- direct local `GET /api/health` call returning `503` for degraded provider configuration
+- direct local `GET /api/v1/health` call returning `200 OK` with healthy dependencies
+- direct local `GET /api/v1/health` call returning `503` for degraded provider configuration
+- live Gemini extraction through `ExtractionCoreService` using a non-sensitive generated sample image
+- local manual reliability checks for repair, timeout, and LOW-confidence retry behavior using controlled stub responses
 
 ## Notes
 
 - The app validates required environment variables during startup.
-- The database schema and health endpoint are now in place for later API/service components.
-- Google Gemini is the default planned LLM provider going forward because it offers an official free multimodal tier for image/document input.
-- Higher-level extraction, async job, validation, and report flows are added in later components.
+- The database schema, health endpoint, and LLM reliability core are now in place for later API/service components.
+- Google Gemini remains the default planned LLM provider because it offers an official multimodal SDK path and a free-tier-friendly developer workflow.
+- The first real upload API, sync extraction orchestration, and persistence wiring for extraction results begin in Component 5.

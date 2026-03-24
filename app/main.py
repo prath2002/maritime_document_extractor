@@ -1,4 +1,4 @@
-﻿from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 
 from fastapi import FastAPI
@@ -45,7 +45,7 @@ def create_app() -> FastAPI:
         version="0.1.0",
         lifespan=lifespan,
     )
-    app.include_router(health_router, prefix="/api")
+    app.include_router(health_router, prefix=get_settings().api_prefix)
 
     @app.get("/", tags=["meta"])
     async def root() -> dict[str, str]:

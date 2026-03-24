@@ -1,4 +1,4 @@
-﻿from app.config import Settings, get_settings
+from app.config import Settings, get_settings
 from app.llm.base import LLMProvider, UnsupportedProviderError
 from app.llm.providers.gemini import GeminiProvider
 
@@ -13,6 +13,7 @@ def build_llm_provider(settings: Settings | None = None) -> LLMProvider:
     provider_class = SUPPORTED_PROVIDERS.get(active_settings.llm_provider)
     if provider_class is None:
         raise UnsupportedProviderError(
-            f"Provider '{active_settings.llm_provider}' is configured but not yet implemented."
+            f"Provider '{active_settings.llm_provider}' is configured but not yet implemented. "
+            "Component 4 currently supports the Gemini provider path only."
         )
     return provider_class(model_name=active_settings.llm_model, api_key=active_settings.llm_api_key)

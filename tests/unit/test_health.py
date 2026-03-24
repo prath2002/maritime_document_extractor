@@ -1,4 +1,4 @@
-﻿from importlib import reload
+from importlib import reload
 
 from fastapi.testclient import TestClient
 
@@ -22,7 +22,7 @@ def test_health_endpoint_returns_degraded_when_database_check_fails(app_instance
         client.app.state.llm_provider = HealthyProvider()
         client.app.state.llm_provider_error = None
 
-        response = client.get("/api/health")
+        response = client.get("/api/v1/health")
 
     assert response.status_code == 503
     payload = response.json()
@@ -45,7 +45,7 @@ def test_health_endpoint_returns_degraded_when_provider_bootstrap_fails(env_over
     app = reloaded.create_app()
 
     with TestClient(app) as client:
-        response = client.get("/api/health")
+        response = client.get("/api/v1/health")
 
     assert response.status_code == 503
     payload = response.json()

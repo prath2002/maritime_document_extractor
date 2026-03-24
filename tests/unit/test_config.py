@@ -11,7 +11,7 @@ def test_settings_load_with_valid_env(env_override):
 
     assert settings.app_name == "SMDE"
     assert settings.app_env == "test"
-    assert settings.api_prefix == "/api"
+    assert settings.api_prefix == "/api/v1"
 
 
 def test_settings_fail_when_database_url_missing(env_override):
