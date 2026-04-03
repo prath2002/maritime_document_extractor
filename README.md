@@ -10,6 +10,7 @@ This repository currently contains the completed foundation for:
 - Component 2: database and persistence layer
 - Component 3: app bootstrap and `GET /api/v1/health`
 - Component 4: LLM reliability core
+- Component 5: sync extraction flow with persisted results and deduplication
 
 Implemented so far:
 
@@ -32,7 +33,14 @@ Implemented so far:
 - JSON boundary extraction plus repair-prompt flow
 - timeout handling and LOW-confidence retry orchestration
 - `GET /api/v1/health` with real database, queue, and provider dependency states
-- unit and integration tests for config, app bootstrap, migrations, repositories, health checks, and the Component 4 LLM reliability pipeline
+- `POST /api/v1/extract?mode=sync` with:
+  - multipart upload handling
+  - MIME type and 10 MB file-size validation
+  - optional session auto-create
+  - SHA-256 deduplication within a session
+  - persisted success and failed extraction records
+  - normalized extraction/error response payloads
+- unit and integration tests for config, app bootstrap, migrations, repositories, health checks, the Component 4 LLM reliability pipeline, and the Component 5 sync extraction flow
 
 Default provider choice for the first real multimodal implementation path:
 
@@ -93,6 +101,36 @@ Expected behavior:
 - `200 OK` when database, queue, and configured LLM provider are healthy
 - `503` when one or more dependencies are degraded
 
+## Sync Extraction
+
+Call the sync extraction endpoint with a supported document upload:
+
+```powershell
+curl.exe -X POST "http://127.0.0.1:8000/api/v1/extract?mode=sync" ^
+  -F "document=@sample.pdf;type=application/pdf"
+```
+
+Optional existing-session usage:
+
+```powershell
+curl.exe -X POST "http://127.0.0.1:8000/api/v1/extract?mode=sync" ^
+  -F "document=@sample.pdf;type=application/pdf" ^
+  -F "sessionId=<existing-session-uuid>"
+```
+
+Current sync extraction behavior:
+
+- accepts `application/pdf`, `image/jpeg`, and `image/png`
+- rejects files larger than 10 MB
+- creates a new session when `sessionId` is omitted
+- returns a cached result with `X-Deduplicated: true` when the same file is uploaded to the same session again
+- persists failed extraction outcomes instead of dropping them
+
+Current limitation:
+
+- only `mode=sync` is implemented in this repository today
+- queue-backed `mode=async` and job polling begin in Component 6
+
 ## Run Tests
 
 ```powershell
@@ -122,12 +160,22 @@ uv run pytest
 - reliability orchestration in `app/services/extraction_core.py`
 - unit tests for document preparation, provider factory/provider behavior, JSON extraction, timeout handling, repair flow, and LOW-confidence retry selection
 
+## What Component 5 Added
+
+- `POST /api/v1/extract` route in `app/api/extract.py`
+- sync extraction orchestration in `app/services/sync_extraction.py`
+- sync extraction success/error response models in `app/schemas/extraction.py`
+- SHA-256 hashing helper in `app/utils/hash.py`
+- extraction repository update support for persisted retry/failure handling
+- integration tests for sync happy path, validation failures, deduplication, parse failure persistence, and timeout persistence
+
 ## Planning Docs
 
 - `documents/COMPONENT_PLAN.md`: overall delivery roadmap
 - `documents/COMPONENT_2_TASK_LIST.md`: completed database and persistence checklist
 - `documents/COMPONENT_3_TASK_LIST.md`: completed app bootstrap and health-endpoint checklist
 - `documents/COMPONENT_4_TASK_LIST.md`: completed LLM reliability-core checklist
+- `documents/COMPONENT_5_TASK_LIST.md`: completed sync extraction checklist
 
 ## Verification
 
@@ -139,10 +187,19 @@ The following are verified:
 - direct local `GET /api/v1/health` call returning `503` for degraded provider configuration
 - live Gemini extraction through `ExtractionCoreService` using a non-sensitive generated sample image
 - local manual reliability checks for repair, timeout, and LOW-confidence retry behavior using controlled stub responses
+- local sync extraction coverage for:
+  - successful upload with session auto-create
+  - existing-session upload path
+  - deduplication with `X-Deduplicated: true`
+  - unsupported format handling
+  - file-too-large handling
+  - parse-failure persistence
+  - timeout-failure persistence
 
 ## Notes
 
 - The app validates required environment variables during startup.
-- The database schema, health endpoint, and LLM reliability core are now in place for later API/service components.
+- Uploaded source documents are kept in memory only for the sync flow; they are not persisted to disk.
+- The database schema, health endpoint, LLM reliability core, and sync extraction flow are now in place for later API/service components.
 - Google Gemini remains the default planned LLM provider because it offers an official multimodal SDK path and a free-tier-friendly developer workflow.
-- The first real upload API, sync extraction orchestration, and persistence wiring for extraction results begin in Component 5.
+- The async job flow, polling endpoint, and session-compliance endpoints begin in Component 6.

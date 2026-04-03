@@ -45,6 +45,13 @@ class ExtractionRepo:
         result = await self.session.execute(select(Extraction).where(Extraction.id == extraction_id))
         return result.scalar_one_or_none()
 
+    async def update(self, record: Extraction, **data: Any) -> Extraction:
+        for key, value in data.items():
+            setattr(record, key, value)
+
+        await self.session.flush()
+        return record
+
     async def find_by_session_and_hash(
         self, session_id: uuid.UUID, file_hash: str
     ) -> Extraction | None:

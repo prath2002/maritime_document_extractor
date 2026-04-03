@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 
 from fastapi import FastAPI
 
-from app.api import health_router
+from app.api import extraction_router, health_router
 from app.config import Settings, get_settings
 from app.db.base import dispose_engine
 from app.db.health import ping_database
@@ -46,6 +46,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
     app.include_router(health_router, prefix=get_settings().api_prefix)
+    app.include_router(extraction_router, prefix=get_settings().api_prefix)
 
     @app.get("/", tags=["meta"])
     async def root() -> dict[str, str]:
